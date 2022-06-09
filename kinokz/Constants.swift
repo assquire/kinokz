@@ -23,6 +23,7 @@ struct Constants {
         static let sectionTableViewCellHeight: CGFloat = 250
         static let movieCollectionViewCellWidth: CGFloat = sectionTableViewCellHeight / 2.25
         static let mainTitle = "Фильмы"
+        static let enumNowPlayingTitle = "Сегодня в кино"
     }
     
     struct Icons {
