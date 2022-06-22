@@ -10,7 +10,6 @@ import SnapKit
 
 final class MoviesViewController: UIViewController {
     
-    var movieManager = MovieManager()
     var viewModel = MovieViewModel()
     
     private let sectionNames: [RequestType] = [.nowPlaying, .popular, .upcoming]
@@ -28,16 +27,13 @@ final class MoviesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+
+        viewModel.delegate = self
+        viewModel.fetchAll()
         
-        movieManager.delegate = viewModel
-        movieManager.viewModel = viewModel
-        movieManager.fetchContent(with: .genres)
-        movieManager.fetchContent(with: .nowPlaying)
-        movieManager.fetchContent(with: .popular)
-        movieManager.fetchContent(with: .upcoming)
-        
+        print(viewModel.getGenres())
         print(viewModel.getMovies(with: .nowPlaying))
-                
+                    
         configureNavBar()
         setupViews()
         setupConstraints()
@@ -85,6 +81,14 @@ extension MoviesViewController: CollectionViewInTableViewDelegate {
         let vc = DetailsViewController()
         vc.label.text = "Title is \(data.title)"
         navigationController?.pushViewController(vc, animated: true)
+    }
+}
+
+//MARK: - Movie view model delegate methods
+
+extension MoviesViewController: MovieViewModelDelegate {
+    func didUpdateViewModel(_ viewModel: MovieViewModel) {
+        self.viewModel = viewModel
     }
 }
 

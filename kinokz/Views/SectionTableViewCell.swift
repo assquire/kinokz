@@ -32,8 +32,8 @@ final class SectionTableViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        setupViews()
-        setupConstraints()
+//        setupViews()
+//        setupConstraints()
     }
     
     required init?(coder: NSCoder) {

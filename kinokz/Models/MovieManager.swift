@@ -8,8 +8,8 @@
 import Foundation
 
 protocol MovieManagerDelegate: AnyObject {
-    func didUpdateGenreList(_ viewModel: MovieViewModel, with dict: [Int:String])
-    func didUpdateMovieList(_ viewModel: MovieViewModel, with movies: [MovieModel], on type: RequestType)
+    func didUpdateGenreList(with dict: [Int:String])
+    func didUpdateMovieList(with movies: [MovieModel], on type: RequestType)
     func didFailWithError(error: Error)
 }
 
@@ -41,29 +41,26 @@ struct MovieManager {
     }
     
     func performRequest(with urlString: String, requestType type: RequestType) {
-        if let url = URL(string: urlString) {
-            let session = URLSession(configuration: .default)
-            let task = session.dataTask(with: url) { data, response, error in
-                if error != nil {
-                    delegate?.didFailWithError(error: error!)
-                    return
-                }
-                if let safeData = data {
-                    guard let safeViewModel = viewModel else { return }
-                    switch type {
-                    case .genres:
-                        if let genres = self.parseGenreJSON(safeData) {
-                            delegate?.didUpdateGenreList(safeViewModel, with: genres)
-                        }
-                    default:
-                        if let movies = self.parseMoviesJSON(safeData) {
-                            delegate?.didUpdateMovieList(safeViewModel, with: movies, on: type)
-                        }
+        guard let url = URL(string: urlString), let viewModel = viewModel else { return }
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+//            print("--------")
+//            print(viewModel.getGenres())
+            if let data = data, error == nil {
+                switch type {
+                case .genres:
+                    if let genres = parseGenreJSON(data) {
+                        delegate?.didUpdateGenreList(with: genres)
+                    }
+                default:
+                    if let movies = parseMoviesJSON(data) {
+                        delegate?.didUpdateMovieList(with: movies, on: type)
                     }
                 }
+            } else {
+                delegate?.didFailWithError(error: error!)
             }
-            task.resume()
         }
+        task.resume()
     }
     
     func parseGenreJSON(_ data: Data) -> [Int:String]? {
@@ -84,7 +81,7 @@ struct MovieManager {
     }
     
     func parseMoviesJSON(_ data: Data) -> [MovieModel]? {
-        guard let safeViewModel = viewModel else { fatalError() }
+        guard let viewModel = viewModel else { fatalError() }
         var movieList: [MovieModel] = []
         do {
             let decodedData = try JSONDecoder().decode(MovieData.self, from: data)
@@ -98,7 +95,7 @@ struct MovieManager {
                 let title = movie.title
                 let voteAverage = movie.vote_average
                 let voteCount = movie.vote_count
-                let movieModel = MovieModel(movieViewModel: safeViewModel, genreIds: genreIds, id: id, overview: overview, posterPath: posterPath, releaseDate: releaseDate, title: title, voteAverage: voteAverage, voteCount: voteCount)
+                let movieModel = MovieModel(movieViewModel: viewModel, genreIds: genreIds, id: id, overview: overview, posterPath: posterPath, releaseDate: releaseDate, title: title, voteAverage: voteAverage, voteCount: voteCount)
                 movieList.append(movieModel)
             }
             return movieList

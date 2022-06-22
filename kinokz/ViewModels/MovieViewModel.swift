@@ -7,17 +7,29 @@
 
 import Foundation
 
+protocol MovieViewModelDelegate {
+    func didUpdateViewModel(_ viewModel: MovieViewModel)
+}
+
 protocol MovieViewModelProtocol {
     func getGenres() -> [Int : String]
     func getMovies(with type: RequestType) -> [MovieModel]
 }
 
 final class MovieViewModel: MovieViewModelProtocol {
-        
+            
+    var movieManager = MovieManager()
+    var delegate: MovieViewModelDelegate?
+    
     private lazy var movieGenres: [Int : String] = [:]
     private lazy var nowPlayingMovies: [MovieModel] = []
     private lazy var popularMovies: [MovieModel] = []
     private lazy var upcomingMovies: [MovieModel] = []
+    
+    init() {
+        movieManager.delegate = self
+        movieManager.viewModel = self
+    }
     
     func getGenres() -> [Int : String] {
         return movieGenres
@@ -43,30 +55,36 @@ final class MovieViewModel: MovieViewModelProtocol {
         }
         return result
     }
+    
+    func fetchAll() {
+        RequestType.allCases.forEach {
+            movieManager.fetchContent(with: $0)
+            delegate?.didUpdateViewModel(self)
+        }
+    }
 }
 
 //MARK: - Movie manager delegate methods
 
 extension MovieViewModel: MovieManagerDelegate {
-    func didUpdateGenreList(_ viewModel: MovieViewModel, with dict: [Int : String]) {
-        viewModel.movieGenres = dict
+    func didUpdateGenreList(with dict: [Int : String]) {
+        movieGenres = dict
     }
     
     
-    func didUpdateMovieList(_ viewModel: MovieViewModel, with movies: [MovieModel], on type: RequestType) {
+    func didUpdateMovieList(with movies: [MovieModel], on type: RequestType) {
         switch type {
-        case .genres:
-            break
         case .nowPlaying:
-            viewModel.nowPlayingMovies = movies
+            nowPlayingMovies = movies
         case .popular:
-            viewModel.popularMovies = movies
+            popularMovies = movies
         case .upcoming:
-            viewModel.upcomingMovies = movies
+            upcomingMovies = movies
+        default: return
         }
     }
     
     func didFailWithError(error: Error) {
-        print("You got following erroу while trying to fetch the data: \(error)")
+        print("You got following error while trying to fetch the data: \(error)")
     }
 }
